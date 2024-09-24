@@ -62,14 +62,14 @@ public class ApacheStreamLatencyTest {
     @Test
     void v2request() throws Exception {
         // doClose(s3Client, client);
-        TestSocketFactory socketFactory = TestSocketFactory.create();
+        // TestSocketFactory socketFactory = TestSocketFactory.create();
         SdkHttpClient http = ApacheHttpClient.builder()
-                                             .socketFactory(socketFactory)
+                                             // .socketFactory(socketFactory)
                                              .build();
 
         S3Client s3Client = S3Client.builder().region(Region.US_WEST_2).httpClient(http).build();
         doAbort(s3Client, "====== APACHE CLIENT =====");
-        System.out.println("BYTES READ: " + socketFactory.inputStreamHolder.bytesRead());
+        // System.out.println("BYTES READ: " + socketFactory.inputStreamHolder.bytesRead());
     }
 
     static void doClose(S3Client s3Client, String client) throws Exception {

@@ -21,10 +21,11 @@
     </Appenders>
 
     <Loggers>
-        <Root level="ERROR">
+        <Root level="WARN">
             <AppenderRef ref="ConsoleAppender"/>
         </Root>
         <Logger name="software.amazon.awssdk" level="WARN" />
         <Logger name="software.amazon.awssdk.request" level="DEBUG" />
+        <Logger name="org.apache.http" level="DEBUG" />
     </Loggers>
 </Configuration>
