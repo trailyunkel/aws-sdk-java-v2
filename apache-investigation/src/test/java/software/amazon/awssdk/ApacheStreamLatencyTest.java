@@ -55,16 +55,15 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.utils.AttributeMap;
-import software.amazon.awssdk.utils.StringUtils;
 
 public class ApacheStreamLatencyTest {
 
-    static final String pathToDump = "/Users/olapplin/Develop/tmp/";
+    static final String pathToDump = "[replace me]"; // used for heap dump
 
     static final int MB = 1024 * 1024;
 
-    static String bucket = "";
-    static String key = "";
+    static final String bucket = "[replace me]";
+    static final String key = "[replace me]";
 
     S3Client s3Client;
 
@@ -75,22 +74,14 @@ public class ApacheStreamLatencyTest {
                                              .build();
 
         s3Client = S3Client.builder()
-                           .serviceConfiguration(c -> c.checksumValidationEnabled(false) // make the request similar to v1
-                                                       // .pathStyleAccessEnabled(true)
+                           .serviceConfiguration(
+                               c -> c.checksumValidationEnabled(false) // similar to v1
                            )
-                           // .endpointOverride(URI.create("http://s3.aws-master.amazon.com"))
                            .region(Region.US_WEST_2)
                            .httpClient(http)
                            .build();
     }
 
-    // @Test
-    void createBucket() {
-        CreateBucketResponse res = s3Client.createBucket(r -> r.bucket(bucket));
-        System.out.println(res);
-    }
-
-    // @Test
     void uploadObject() {
         PutObjectResponse res = s3Client.putObject(r -> r.bucket(bucket).key(key), RequestBody.fromString(rand(400 * MB)));
         System.out.println(res);
@@ -101,6 +92,8 @@ public class ApacheStreamLatencyTest {
         System.out.println(res);
     }
 
+    // @ParameterizedTest
+    // @MethodSource("software.amazon.awssdk.Utils#apache")
     @Test
     void v2request() throws Exception {
         // doClose(s3Client, client);
@@ -132,7 +125,6 @@ public class ApacheStreamLatencyTest {
     }
 
     static void doAbort(S3Client s3Client, String client) throws Exception {
-
         System.out.println(client);
         System.out.println("GETTING FILE");
         GetObjectRequest getRequest = GetObjectRequest.builder()

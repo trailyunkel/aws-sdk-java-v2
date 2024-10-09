@@ -16,6 +16,7 @@
 package software.amazon.awssdk.core.internal.metrics;
 
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.concurrent.atomic.AtomicLong;
 import software.amazon.awssdk.annotations.SdkInternalApi;
 import software.amazon.awssdk.core.io.SdkFilterInputStream;
@@ -75,13 +76,13 @@ public final class BytesReadTrackingInputStream extends SdkFilterInputStream imp
 
     @Override
     public void close() throws IOException {
-        log.warn(() -> "!!!!!!!!!! bytesRead:" + bytesRead());
+        log.warn(() -> "!!!!!!!!!! bytesRead: " + NumberFormat.getInstance().format(bytesRead()));
         super.close();
     }
 
     @Override
     public void abort() {
-        log.warn(() -> "!!!!!!!!!! bytesRead:" + bytesRead());
+        log.warn(() -> "!!!!!!!!!! bytesRead: " + NumberFormat.getInstance().format(bytesRead()));
         abortableIs.abort();
     }
 }
