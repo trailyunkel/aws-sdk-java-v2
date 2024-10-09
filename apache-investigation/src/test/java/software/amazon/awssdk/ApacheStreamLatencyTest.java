@@ -71,14 +71,15 @@ public class ApacheStreamLatencyTest {
     @BeforeEach
     void init() {
         SdkHttpClient http = ApacheHttpClient.builder()
-                                             // .socketFactory(TestSocketFactory.create())
+                                             // .socketFactory(TestSocketFactory.create()) // read from socket directly
                                              .build();
 
-
         s3Client = S3Client.builder()
-                           .endpointOverride(URI.create("http://s3.aws-master.amazon.com"))
-                           .serviceConfiguration(c -> c.checksumValidationEnabled(false).pathStyleAccessEnabled(true))
-                           .region(Region.US_EAST_1)
+                           .serviceConfiguration(c -> c.checksumValidationEnabled(false) // make the request similar to v1
+                                                       // .pathStyleAccessEnabled(true)
+                           )
+                           // .endpointOverride(URI.create("http://s3.aws-master.amazon.com"))
+                           .region(Region.US_WEST_2)
                            .httpClient(http)
                            .build();
     }
@@ -100,8 +101,6 @@ public class ApacheStreamLatencyTest {
         System.out.println(res);
     }
 
-    // @ParameterizedTest
-    // @MethodSource("software.amazon.awssdk.Utils#apache")
     @Test
     void v2request() throws Exception {
         // doClose(s3Client, client);
@@ -155,6 +154,7 @@ public class ApacheStreamLatencyTest {
         ByteStreams.readFully(is, megablock);
     }
 
+    // creates a java heap dump
     public static void dumpHeap(String filePath, boolean live) throws IOException {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         HotSpotDiagnosticMXBean mxBean = ManagementFactory.newPlatformMXBeanProxy(
