@@ -22,31 +22,40 @@ import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.URI;
 import java.time.Duration;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.management.MBeanServer;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import org.apache.http.HttpHost;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.protocol.HttpContext;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.internal.metrics.BytesReadTrackingInputStream;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.http.AbortableInputStream;
 import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.http.SdkHttpConfigurationOption;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.http.apache.internal.conn.SdkTlsSocketFactory;
-import software.amazon.awssdk.http.apache.internal.impl.ApacheSdkHttpClient;
 import software.amazon.awssdk.http.apache.internal.net.DelegateSocket;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.utils.AttributeMap;
+import software.amazon.awssdk.utils.StringUtils;
 
 public class ApacheStreamLatencyTest {
 
@@ -54,8 +63,42 @@ public class ApacheStreamLatencyTest {
 
     static final int MB = 1024 * 1024;
 
-    static String bucket = "olapplin-test-bucket";
-    static String key = "test-key-1724783487614.dat";
+    static String bucket = "";
+    static String key = "";
+
+    S3Client s3Client;
+
+    @BeforeEach
+    void init() {
+        SdkHttpClient http = ApacheHttpClient.builder()
+                                             // .socketFactory(TestSocketFactory.create())
+                                             .build();
+
+
+        s3Client = S3Client.builder()
+                           .endpointOverride(URI.create("http://s3.aws-master.amazon.com"))
+                           .serviceConfiguration(c -> c.checksumValidationEnabled(false).pathStyleAccessEnabled(true))
+                           .region(Region.US_EAST_1)
+                           .httpClient(http)
+                           .build();
+    }
+
+    // @Test
+    void createBucket() {
+        CreateBucketResponse res = s3Client.createBucket(r -> r.bucket(bucket));
+        System.out.println(res);
+    }
+
+    // @Test
+    void uploadObject() {
+        PutObjectResponse res = s3Client.putObject(r -> r.bucket(bucket).key(key), RequestBody.fromString(rand(400 * MB)));
+        System.out.println(res);
+    }
+
+    void headObject() {
+        HeadObjectResponse res = s3Client.headObject(r -> r.bucket(bucket).key(key));
+        System.out.println(res);
+    }
 
     // @ParameterizedTest
     // @MethodSource("software.amazon.awssdk.Utils#apache")
@@ -63,11 +106,7 @@ public class ApacheStreamLatencyTest {
     void v2request() throws Exception {
         // doClose(s3Client, client);
         // TestSocketFactory socketFactory = TestSocketFactory.create();
-        SdkHttpClient http = ApacheHttpClient.builder()
-                                             // .socketFactory(socketFactory)
-                                             .build();
 
-        S3Client s3Client = S3Client.builder().region(Region.US_WEST_2).httpClient(http).build();
         doAbort(s3Client, "====== APACHE CLIENT =====");
         // System.out.println("BYTES READ: " + socketFactory.inputStreamHolder.bytesRead());
     }
@@ -136,7 +175,7 @@ public class ApacheStreamLatencyTest {
         public Socket connectSocket(int connectTimeout, Socket socket, HttpHost host, InetSocketAddress remoteAddress,
                                     InetSocketAddress localAddress, HttpContext context) throws IOException {
             Socket s = super.connectSocket(connectTimeout, socket, host, remoteAddress, localAddress, context);
-            System.out.printf("[wireshark] PORT: %s%n", + s.getPort());
+            System.out.printf("[wireshark] PORT: %s%n", +s.getPort());
             System.out.printf("[wireshark] REMOTE ADDR: %s%n", s.getRemoteSocketAddress());
             return new DelegateSocket(s) {
                 @Override
@@ -155,5 +194,11 @@ public class ApacheStreamLatencyTest {
         }
     }
 
+    static String rand(int size) {
+        Random r = new Random();
+        byte[] content = new byte[size];
+        r.nextBytes(content);
+        return new String(content);
+    }
 
 }
