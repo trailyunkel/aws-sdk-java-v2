@@ -28,7 +28,7 @@ import software.amazon.awssdk.codegen.poet.client.SyncClientInterface;
 import software.amazon.awssdk.codegen.poet.endpointdiscovery.EndpointDiscoveryCacheLoaderGenerator;
 
 public class SyncClientGeneratorTasks extends BaseGeneratorTasks {
-    private final GeneratorTaskParams generatorTaskParams;
+    protected final GeneratorTaskParams generatorTaskParams;
 
     public SyncClientGeneratorTasks(GeneratorTaskParams dependencies) {
         super(dependencies);
@@ -56,7 +56,7 @@ public class SyncClientGeneratorTasks extends BaseGeneratorTasks {
         return tasks;
     }
 
-    private GeneratorTask createClientClassTask() throws IOException {
+    protected GeneratorTask createClientClassTask() throws IOException {
         return createPoetGeneratorTask(new SyncClientClass(generatorTaskParams));
     }
 

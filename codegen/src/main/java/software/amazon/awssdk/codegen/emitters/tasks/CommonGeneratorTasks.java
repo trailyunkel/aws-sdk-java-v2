@@ -15,6 +15,10 @@
 
 package software.amazon.awssdk.codegen.emitters.tasks;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import software.amazon.awssdk.codegen.emitters.GeneratorTask;
 import software.amazon.awssdk.codegen.emitters.GeneratorTaskParams;
 
 /**
@@ -22,12 +26,21 @@ import software.amazon.awssdk.codegen.emitters.GeneratorTaskParams;
  */
 class CommonGeneratorTasks extends CompositeGeneratorTask {
     CommonGeneratorTasks(GeneratorTaskParams params) {
-        super(new CommonClientGeneratorTasks(params),
-              new SyncClientGeneratorTasks(params),
-              new MarshallerGeneratorTasks(params),
-              new ModelClassGeneratorTasks(params),
-              new PackageInfoGeneratorTasks(params),
-              new BaseExceptionClassGeneratorTasks(params),
-              new CommonInternalGeneratorTasks(params));
+        super(tasks(params));
+    }
+
+    private static List<GeneratorTask> tasks(GeneratorTaskParams params) {
+        List<GeneratorTask> tasks = new ArrayList<>();
+        tasks.add(new CommonClientGeneratorTasks(params));
+        tasks.add(new SyncClientGeneratorTasks(params));
+        tasks.add(new MarshallerGeneratorTasks(params));
+        tasks.add(new ModelClassGeneratorTasks(params));
+        tasks.add(new PackageInfoGeneratorTasks(params));
+        tasks.add(new BaseExceptionClassGeneratorTasks(params));
+        tasks.add(new CommonInternalGeneratorTasks(params));
+        if (params.getModel().getCustomizationConfig().isMultiReleaseJarLog()) {
+            tasks.add(new MultiReleaseSyncClientGeneratorTasks(params));
+        }
+        return tasks;
     }
 }

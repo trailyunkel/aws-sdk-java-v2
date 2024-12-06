@@ -25,13 +25,18 @@ public class GeneratorPathProvider {
 
     private final IntermediateModel model;
     private final String sourceDirectory;
+    private final String multiReleaseJarSourceDirectory;
     private final String resourcesDirectory;
     private final String testDirectory;
 
-    public GeneratorPathProvider(IntermediateModel model, String sourceDirectory, String testDirectory,
+    public GeneratorPathProvider(IntermediateModel model,
+                                 String sourceDirectory,
+                                 String multiReleaseJarSourceDirectory,
+                                 String testDirectory,
                                  String resourcesDirectory) {
         this.model = model;
         this.sourceDirectory = sourceDirectory;
+        this.multiReleaseJarSourceDirectory = multiReleaseJarSourceDirectory;
         this.resourcesDirectory = resourcesDirectory;
         this.testDirectory = testDirectory;
     }
@@ -46,6 +51,10 @@ public class GeneratorPathProvider {
 
     public String getTestDirectory() {
         return testDirectory;
+    }
+
+    public String getMultiReleaseJarSourceDirectory() {
+        return multiReleaseJarSourceDirectory;
     }
 
     public String getModelDirectory() {

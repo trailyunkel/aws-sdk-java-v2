@@ -352,6 +352,14 @@ public class CustomizationConfig {
      */
     private boolean enableFastUnmarshaller;
 
+
+    /**
+     * POC for multi-release jar
+     */
+    private boolean multiReleaseJarLog;
+    public boolean isMultiReleaseJarLog() { return multiReleaseJarLog; }
+    public void setMultiReleaseJarLog(boolean multiReleaseJarLog) { this.multiReleaseJarLog = multiReleaseJarLog; }
+
     private CustomizationConfig() {
     }
 
@@ -926,4 +934,5 @@ public class CustomizationConfig {
     public void setEnableFastUnmarshaller(boolean enableFastUnmarshaller) {
         this.enableFastUnmarshaller = enableFastUnmarshaller;
     }
+
 }

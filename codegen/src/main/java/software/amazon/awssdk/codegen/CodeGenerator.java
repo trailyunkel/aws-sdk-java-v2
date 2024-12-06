@@ -35,6 +35,7 @@ public class CodeGenerator {
     private final String sourcesDirectory;
     private final String resourcesDirectory;
     private final String testsDirectory;
+    private final String multiReleaseSourceDirectory;
 
     /**
      * The prefix for the file name that contains the intermediate model.
@@ -55,6 +56,7 @@ public class CodeGenerator {
         this.resourcesDirectory = builder.resourcesDirectory != null ? builder.resourcesDirectory
                                                                      : builder.sourcesDirectory;
         this.fileNamePrefix = builder.fileNamePrefix;
+        this.multiReleaseSourceDirectory = builder.multiReleaseSourceDirectory;
     }
 
     public static File getModelDirectory(String outputDirectory) {
@@ -117,12 +119,16 @@ public class CodeGenerator {
     }
 
     private void emitCode(IntermediateModel intermediateModel) {
-        ForkJoinTask.invokeAll(createGeneratorTasks(intermediateModel));
+        ForkJoinTask.invokeAll(
+            createGeneratorTasks(intermediateModel)
+            //, createGeneratorTasks(intermediateModel, multiReleaseSourceDirectory)
+        );
     }
 
     private GeneratorTask createGeneratorTasks(IntermediateModel intermediateModel) {
         return new AwsGeneratorTasks(GeneratorTaskParams.create(intermediateModel,
                                                                 sourcesDirectory,
+                                                                multiReleaseSourceDirectory,
                                                                 testsDirectory,
                                                                 resourcesDirectory));
 
@@ -138,6 +144,7 @@ public class CodeGenerator {
         private String resourcesDirectory;
         private String testsDirectory;
         private String fileNamePrefix;
+        private String multiReleaseSourceDirectory;
 
         private Builder() {
         }
@@ -149,6 +156,11 @@ public class CodeGenerator {
 
         public Builder sourcesDirectory(String sourcesDirectory) {
             this.sourcesDirectory = sourcesDirectory;
+            return this;
+        }
+
+        public Builder multiReleaseSourceDirectory(String multiReleaseSourceDirectory) {
+            this.multiReleaseSourceDirectory = multiReleaseSourceDirectory;
             return this;
         }
 

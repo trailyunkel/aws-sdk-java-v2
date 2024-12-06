@@ -65,21 +65,30 @@ public class GenerationMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", readonly = true)
     private MavenProject project;
 
+    @Parameter(defaultValue = "${multi-jar.version}", readonly = true)
+    private String multiReleaseJarVersion;
+
     private Path sourcesDirectory;
     private Path resourcesDirectory;
     private Path testsDirectory;
+    private Path multiReleaseSourceDirectory;
 
     @Override
     public void execute() throws MojoExecutionException {
         this.sourcesDirectory = Paths.get(outputDirectory).resolve("generated-sources").resolve("sdk");
+        this.getLog().info("multiReleaseJarVersion=" + this.multiReleaseJarVersion);
+        this.multiReleaseSourceDirectory = Paths.get(outputDirectory)
+                                                .resolve("generated-sources-" + multiReleaseJarVersion)
+                                                .resolve("sdk");
+        this.getLog().info("multiReleaseSourceDirectory=" + this.multiReleaseSourceDirectory);
         this.resourcesDirectory = Paths.get(outputDirectory).resolve("generated-resources").resolve("sdk-resources");
         this.testsDirectory = Paths.get(outputDirectory).resolve("generated-test-sources").resolve("sdk-tests");
 
-        findModelRoots().forEach(p -> {
-            Path modelRootPath = p.modelRoot;
+        findModelRoots().forEach(modelRoot -> {
+            Path modelRootPath = modelRoot.modelRoot;
             getLog().info("Loading from: " + modelRootPath.toString());
             generateCode(C2jModels.builder()
-                                  .customizationConfig(p.customizationConfig)
+                                  .customizationConfig(modelRoot.customizationConfig)
                                   .serviceModel(loadServiceModel(modelRootPath))
                                   .waitersModel(loadWaiterModel(modelRootPath))
                                   .paginatorsModel(loadPaginatorModel(modelRootPath))
@@ -113,6 +122,7 @@ public class GenerationMojo extends AbstractMojo {
     private void generateCode(C2jModels models) {
         CodeGenerator.builder()
                      .models(models)
+                     .multiReleaseSourceDirectory(multiReleaseSourceDirectory.toFile().getAbsolutePath())
                      .sourcesDirectory(sourcesDirectory.toFile().getAbsolutePath())
                      .resourcesDirectory(resourcesDirectory.toFile().getAbsolutePath())
                      .testsDirectory(testsDirectory.toFile().getAbsolutePath())

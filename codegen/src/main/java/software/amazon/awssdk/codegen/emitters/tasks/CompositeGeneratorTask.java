@@ -15,6 +15,7 @@
 
 package software.amazon.awssdk.codegen.emitters.tasks;
 
+import java.util.List;
 import java.util.concurrent.ForkJoinTask;
 import software.amazon.awssdk.codegen.emitters.GeneratorTask;
 
@@ -24,6 +25,11 @@ public abstract class CompositeGeneratorTask extends GeneratorTask {
     protected CompositeGeneratorTask(GeneratorTask... tasks) {
         this.tasks = tasks;
     }
+
+    protected CompositeGeneratorTask(List<GeneratorTask> tasks) {
+        this.tasks = tasks.toArray(new GeneratorTask[0]);
+    }
+
 
     @Override
     protected void compute() {

@@ -27,6 +27,7 @@ import software.amazon.awssdk.codegen.poet.ClassSpec;
 
 public abstract class BaseGeneratorTasks extends GeneratorTask {
     protected final String baseDirectory;
+    protected final String multiReleaseBaseDirectory;
     protected final String testDirectory;
     protected final IntermediateModel model;
     protected final Logger log;
@@ -34,6 +35,7 @@ public abstract class BaseGeneratorTasks extends GeneratorTask {
     public BaseGeneratorTasks(GeneratorTaskParams dependencies) {
         this.baseDirectory = dependencies.getPathProvider().getSourceDirectory();
         this.testDirectory = dependencies.getPathProvider().getTestDirectory();
+        this.multiReleaseBaseDirectory = dependencies.getPathProvider().getMultiReleaseJarSourceDirectory();
         this.model = dependencies.getModel();
         this.log = dependencies.getLog();
     }
@@ -59,6 +61,12 @@ public abstract class BaseGeneratorTasks extends GeneratorTask {
         String targetDirectory = testDirectory + '/' + Utils.packageToDirectory(classSpec.className().packageName());
         return new PoetGeneratorTask(targetDirectory, model.getFileHeader(), classSpec);
     }
+
+    protected final GeneratorTask createMultiReleasePoetGeneratorTask(ClassSpec classSpec) {
+        String targetDirectory =  multiReleaseBaseDirectory + '/' + Utils.packageToDirectory(classSpec.className().packageName());
+        return new PoetGeneratorTask(targetDirectory, model.getFileHeader(), classSpec);
+    }
+
 
     protected abstract List<GeneratorTask> createTasks() throws Exception;
 

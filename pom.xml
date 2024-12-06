@@ -50,6 +50,7 @@
     </developers>
 
     <modules>
+        <module>mr-jar-demo</module>
         <module>aws-sdk-java</module>
         <module>core</module>
         <module>services</module>
@@ -151,7 +152,7 @@
         <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
         <maven-javadoc-plugin.version>3.4.1</maven-javadoc-plugin.version>
         <maven.build.timestamp.format>yyyy</maven.build.timestamp.format>
-        <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
+        <maven-dependency-plugin.version>3.8.1</maven-dependency-plugin.version>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
         <checkstyle.version>8.42</checkstyle.version>
         <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
@@ -189,6 +190,8 @@
         <javadoc.resourcesDir>${session.executionRootDirectory}</javadoc.resourcesDir>
         <scm.github.url>https://github.com/aws/aws-sdk-java-v2</scm.github.url>
         <scm.github.connection>scm:git:git://github.com/aws/aws-sdk-java-v2.git</scm.github.connection>
+
+        <multi-jar.version>21</multi-jar.version>
     </properties>
 
     <dependencyManagement>
@@ -1472,5 +1475,72 @@
                 </plugins>
             </build>
         </profile>
+
+        <profile>
+            <id>multi-release</id>
+            <activation>
+                <jdk>[21,)</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <version>3.3.0</version>
+                        <configuration>
+                            <archive>
+                                <manifestEntries>
+                                    <Multi-Release>true</Multi-Release>
+                                </manifestEntries>
+                            </archive>
+                        </configuration>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>${maven-compiler-plugin.version}</version>
+                        <configuration>
+                            <source>${jre.version}</source>
+                            <target>${jre.version}</target>
+                            <encoding>UTF-8</encoding>
+                            <forceJavacCompilerUse>true</forceJavacCompilerUse>
+                            <compilerArgument>-proc:none</compilerArgument>
+                            <fork>false</fork>
+                            <compilerArgument>-proc:none</compilerArgument>
+                            <excludes>
+                                <exclude>software/amazon/awssdk/services/kinesis/model/SubscribeToShardEvent.java</exclude>
+                                <exclude>software/amazon/awssdk/services/kinesis/KinesisAsyncClient.java</exclude>
+                                <exclude>software/amazon/awssdk/services/kinesis/DefaultKinesisAsyncClient.java</exclude>
+                                <exclude>software/amazon/awssdk/services/kinesis/DefaultKinesisBaseClientBuilder.java</exclude>
+                                <exclude>software/amazon/awssdk/services/sms/model/InternalError.java</exclude>
+                                <exclude>software/amazon/awssdk/services/kinesis/transform/SubscribeToShardResponseUnmarshaller.java</exclude>
+                            </excludes>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>compile-java-${multi-jar.version}</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                                <configuration>
+                                    <release>${multi-jar.version}</release>
+                                    <source>${multi-jar.version}</source>
+                                    <target>${multi-jar.version}</target>
+                                    <compileSourceRoots>
+                                        <compileSourceRoot>${project.basedir}/src/main/java${multi-jar.version}</compileSourceRoot>
+                                        <compileSourceRoot>${project.basedir}/target/generated-sources-21/sdk</compileSourceRoot>
+                                    </compileSourceRoots>
+                                    <multiReleaseOutput>true</multiReleaseOutput>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+
+        </profile>
+
     </profiles>
 </project>
