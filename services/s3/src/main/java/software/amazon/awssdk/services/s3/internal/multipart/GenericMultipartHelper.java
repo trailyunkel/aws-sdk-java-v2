@@ -87,11 +87,15 @@ public final class GenericMultipartHelper<RequestT extends S3Request, ResponseT 
         log.debug(() -> String.format("Sending completeMultipartUploadRequest, uploadId: %s",
                                       uploadId));
 
-        CompleteMultipartUploadRequest completeMultipartUploadRequest = toCompleteMultipartUploadRequest(request, uploadId,
-                                                                                                         parts, contentLength);
-
-        log.debug(() -> "sending completeMultipartUpload: " + completeMultipartUploadRequest.toString());
-        return s3AsyncClient.completeMultipartUpload(completeMultipartUploadRequest);
+        try {
+            CompleteMultipartUploadRequest completeMultipartUploadRequest = toCompleteMultipartUploadRequest(request, uploadId,
+                                                                                                             parts, contentLength);
+            log.debug(() -> "sending completeMultipartUpload: " + completeMultipartUploadRequest.toString());
+            return s3AsyncClient.completeMultipartUpload(completeMultipartUploadRequest);
+        } catch (Exception e) {
+            log.error(() -> "error while toCompleteMultipartUploadRequest", e);
+            throw e;
+        }
     }
 
     public BiFunction<CompleteMultipartUploadResponse, Throwable, Void> handleExceptionOrResponse(RequestT request,
