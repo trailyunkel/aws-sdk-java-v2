@@ -215,7 +215,7 @@ public class KnownContentLengthAsyncRequestBodySubscriber implements Subscriber<
                 // List of CompletedParts needs to be in ascending order
                 parts = mergeCompletedParts();
             }
-            log.debug(() -> "Completing multipart upload");
+            log.debug(() -> "Completing multipart upload with content-length:" + contentLength);
             completeMpuFuture = multipartUploadHelper.completeMultipartUpload(returnFuture, uploadId, parts, putObjectRequest,
                                                                               contentLength);
         }
