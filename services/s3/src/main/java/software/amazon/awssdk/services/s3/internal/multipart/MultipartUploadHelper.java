@@ -87,6 +87,7 @@ public final class MultipartUploadHelper {
 
         future.handle(genericMultipartHelper.handleExceptionOrResponse(putObjectRequest, returnFuture, uploadId))
               .exceptionally(throwable -> {
+                  log.debug(()->"error when calling s3AsyncClient.completeMultipartUpload");
                   genericMultipartHelper.handleException(returnFuture, () -> "Unexpected exception occurred", throwable);
                   return null;
               });

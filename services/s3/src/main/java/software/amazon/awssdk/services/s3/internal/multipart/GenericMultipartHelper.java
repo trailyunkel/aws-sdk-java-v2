@@ -90,6 +90,7 @@ public final class GenericMultipartHelper<RequestT extends S3Request, ResponseT 
         CompleteMultipartUploadRequest completeMultipartUploadRequest = toCompleteMultipartUploadRequest(request, uploadId,
                                                                                                          parts, contentLength);
 
+        log.debug(() -> "sending completeMultipartUpload: " + completeMultipartUploadRequest.toString());
         return s3AsyncClient.completeMultipartUpload(completeMultipartUploadRequest);
     }
 
@@ -107,9 +108,9 @@ public final class GenericMultipartHelper<RequestT extends S3Request, ResponseT 
             } else {
                 returnFuture.complete(responseConverter.apply(
                     completeMultipartUploadResponse));
+                log.debug(() -> "calling progressListener.subscriberOnComplete()");
                 progressListener.subscriberOnComplete();
             }
-
             return null;
         };
     }

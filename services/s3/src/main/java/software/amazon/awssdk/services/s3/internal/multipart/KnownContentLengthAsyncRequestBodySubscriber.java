@@ -201,7 +201,10 @@ public class KnownContentLengthAsyncRequestBodySubscriber implements Subscriber<
     }
 
     private void completeMultipartUploadIfFinished(int requestsInFlight) {
+        log.debug(() -> "request in flight when checking for complete: " + requestsInFlight);
+        log.debug(() -> "isDone=" + isDone);
         if (isDone && requestsInFlight == 0 && completedMultipartInitiated.compareAndSet(false, true)) {
+            log.debug(() -> "OK to complete");
             CompletedPart[] parts;
             if (existingParts.isEmpty()) {
                 parts =
@@ -212,6 +215,7 @@ public class KnownContentLengthAsyncRequestBodySubscriber implements Subscriber<
                 // List of CompletedParts needs to be in ascending order
                 parts = mergeCompletedParts();
             }
+            log.debug(() -> "Completing multipart upload");
             completeMpuFuture = multipartUploadHelper.completeMultipartUpload(returnFuture, uploadId, parts, putObjectRequest,
                                                                               contentLength);
         }
