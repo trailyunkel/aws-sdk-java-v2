@@ -22,7 +22,6 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -30,7 +29,7 @@ import java.util.Optional;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import software.amazon.awssdk.annotations.SdkInternalApi;
-import software.amazon.awssdk.checksums.internal.DigestAlgorithm;
+import software.amazon.awssdk.checksums.SdkChecksum;
 import software.amazon.awssdk.http.ContentStreamProvider;
 import software.amazon.awssdk.http.Header;
 import software.amazon.awssdk.http.SdkHttpRequest;
@@ -199,26 +198,27 @@ public final class SignerUtils {
      * Move `Content-Length` to `x-amz-decoded-content-length` if not already present. If `Content-Length` is not present, then
      * the payload is read in its entirety to calculate the length.
      */
-    public static long moveContentLength(SdkHttpRequest.Builder request, InputStream payload) {
+    public static long moveContentLength(SdkHttpRequest.Builder request, ContentStreamProvider contentStreamProvider) {
         Optional<String> decodedContentLength = request.firstMatchingHeader(X_AMZ_DECODED_CONTENT_LENGTH);
-        if (!decodedContentLength.isPresent()) {
-            // if the decoded length isn't present, content-length must be there
-            String contentLength = request.firstMatchingHeader(Header.CONTENT_LENGTH).orElseGet(
-                () -> String.valueOf(readAll(payload))
-            );
 
-            request.putHeader(X_AMZ_DECODED_CONTENT_LENGTH, contentLength)
-                   .removeHeader(Header.CONTENT_LENGTH);
-            return Long.parseLong(contentLength);
+        if (decodedContentLength.isPresent()) {
+            request.removeHeader(Header.CONTENT_LENGTH);
+            return Long.parseLong(decodedContentLength.get());
         }
 
-        // decoded header is already there, so remove content-length just to be sure it's gone
-        request.removeHeader(Header.CONTENT_LENGTH);
-        return Long.parseLong(decodedContentLength.get());
-    }
+        long contentLength;
+        Optional<String> contentLengthFromHeader =
+            request.firstMatchingHeader(Header.CONTENT_LENGTH);
+        if (contentLengthFromHeader.isPresent()) {
+            contentLength = Long.parseLong(contentLengthFromHeader.get());
+        } else {
+            InputStream inputStream = contentStreamProvider.newStream();
+            contentLength = inputStream == null ? 0 : readAll(inputStream);
+        }
 
-    private static MessageDigest getMessageDigestInstance() {
-        return DigestAlgorithm.SHA256.getDigest();
+        request.putHeader(X_AMZ_DECODED_CONTENT_LENGTH, String.valueOf(contentLength))
+               .removeHeader(Header.CONTENT_LENGTH);
+        return contentLength;
     }
 
     public static InputStream getBinaryRequestPayloadStream(ContentStreamProvider streamProvider) {
@@ -234,14 +234,14 @@ public final class SignerUtils {
 
     public static byte[] hash(InputStream input) {
         try {
-            MessageDigest md = getMessageDigestInstance();
+            SdkChecksum md = sha256Checksum();
             byte[] buf = new byte[4096];
             int read = 0;
             while (read >= 0) {
                 read = input.read(buf);
                 md.update(buf, 0, read);
             }
-            return md.digest();
+            return md.getChecksumBytes();
         } catch (Exception e) {
             throw new RuntimeException("Unable to compute hash while signing request: ", e);
         }
@@ -249,9 +249,9 @@ public final class SignerUtils {
 
     public static byte[] hash(ByteBuffer input) {
         try {
-            MessageDigest md = getMessageDigestInstance();
+            SdkChecksum md = sha256Checksum();
             md.update(input);
-            return md.digest();
+            return md.getChecksumBytes();
         } catch (Exception e) {
             throw new RuntimeException("Unable to compute hash while signing request: ", e);
         }
@@ -259,9 +259,9 @@ public final class SignerUtils {
 
     public static byte[] hash(byte[] data) {
         try {
-            MessageDigest md = getMessageDigestInstance();
+            SdkChecksum md = sha256Checksum();
             md.update(data);
-            return md.digest();
+            return md.getChecksumBytes();
         } catch (Exception e) {
             throw new RuntimeException("Unable to compute hash while signing request: ", e);
         }
@@ -296,5 +296,9 @@ public final class SignerUtils {
         return requestBuilder.firstMatchingHeader(X_AMZ_CONTENT_SHA256).orElseThrow(
             () -> new IllegalArgumentException("Content hash must be present in the '" + X_AMZ_CONTENT_SHA256 + "' header!")
         );
+    }
+
+    private static SdkChecksum sha256Checksum() {
+        return SdkChecksum.forAlgorithm(() -> "SHA256");
     }
 }
